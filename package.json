@@ -1,0 +1,26 @@
+{
+  "name": "LiveOV-GTFS",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^14.14.41",
+    "basic-ftp": "^4.6.6",
+    "duckdb": "^0.2.5",
+    "express": "^4.17.1",
+    "moment": "^2.29.1",
+    "moment-duration-format": "^2.3.2",
+    "moment-timezone": "^0.5.33",
+    "rd-to-wgs84": "^1.0.0",
+    "xml2js": "^0.4.23"
+  }
+}

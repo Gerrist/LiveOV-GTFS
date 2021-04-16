@@ -1,0 +1,9 @@
+{
+  "mongo_url": "mongodb://app.api.liveov.com:27017/gtfs",
+  "agencies": [
+    {
+      "agency_key": "OpenOV",
+      "url": "http://gtfs.ovapi.nl/nl/gtfs-nl.zip"
+    }
+  ]
+}

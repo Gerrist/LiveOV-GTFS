@@ -1,0 +1,7 @@
+.tmp
+build
+node_modules
+duck_history.bin
+package-lock.json
+stop_times_relevant.csv
+test
