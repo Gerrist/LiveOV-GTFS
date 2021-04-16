@@ -74,6 +74,24 @@ async function run() {
 
     console.log('[Import]', 'Inserting stop_times');
     await query(`COPY stop_times from '${__dirname + '/tmp'}/stop_times.txt';`, gtfsdb);
+    // console.log('[Import]', 'Pre-sorting stop_times');
+    // await query(`SELECT * FROM stop_times ORDER BY departure_time`, gtfsdb);
+
+    console.log('[Import]', 'Creating indexes on stop_times');
+    await query('CREATE INDEX st ON stop_times (stop_id);', gtfsdb)
+    console.log('[Import]', 'Creating indexes on trips');
+    await query('CREATE INDEX tr ON trips (trip_id);', gtfsdb)
+    console.log('[Import]', 'Creating indexes on routes');
+    await query('CREATE INDEX rt ON routes (route_id);', gtfsdb);
+    console.log('[Import]', 'Creating indexes on stops');
+    await query('CREATE INDEX stp_id ON stops (stop_id);', gtfsdb);
+    await query('CREATE INDEX stp_zi ON stops (zone_id);', gtfsdb);
+    await query('CREATE INDEX stp_sc ON stops (stop_code);', gtfsdb);
+    // await query('CREATE INDEX stp_ps ON stops (parent_station);', gtfsdb);
+    // console.log('[Import]', 'Creating indexes on agencies');
+    // await query('CREATE INDEX ag ON agency (agency_id);', gtfsdb);
+    // console.log('[Import]', 'Creating indexes on calendar');
+    // await query('CREATE INDEX cl ON calendar (service_id, date);', gtfsdb);
 
     // await query(`create table stop_times as SELECT * FROM read_csv_auto('${__dirname + '/tmp'}/stop_times.txt', HEADER=TRUE, SAMPLE_SIZE=20000);`, gtfsdb);
 
@@ -122,6 +140,9 @@ async function run() {
 
         let stopArea = req.params.stopArea;
 
+        console.time("Stops");
+
+
         let stopsQuery = await query(`select * from stop_areas WHERE code = '${stopArea}';`, gtfsdb);
         if (stopsQuery.length > 0) {
             let stopArea: {
@@ -147,7 +168,11 @@ async function run() {
             let parentStations = stops.map(s => s.parent_station);
             console.log(parentStations);
 
-            let q2 = `SELECT departure_time as 'departureTime', trip_headsign as 'destination', platform_code as 'platform', trip_long_name as 'formula', agency_name as 'operator', realtime_trip_id as 'trip', date from stop_times join trips using (trip_id) join calendar using (service_id) join routes using (route_id) join stops using (stop_id) join agency using (agency_id) WHERE ((parent_station IN (${parentStations.map(s => "'" + s + "'").join(", ")}) AND date = '${moment().format("YYYYMMDD")}')) ORDER BY departure_time;`;
+            console.timeEnd("Stops");
+            console.time("Calls");
+
+
+            let q2 = `SELECT departure_time as 'departureTime', trip_headsign as 'destination', platform_code as 'platform', route_short_name as 'line', trip_long_name as 'formula', agency_name as 'operator', realtime_trip_id as 'trip', date from stop_times join trips using (trip_id) join calendar using (service_id) join routes using (route_id) join stops using (stop_id) join agency using (agency_id) WHERE ((parent_station IN (${parentStations.map(s => "'" + s + "'").join(", ")}) AND date = '${moment().format("YYYYMMDD")}')) ORDER BY departure_time;`;
             let departures = await query(q2, gtfsdb);
             departures.map(d => {
                 return {
@@ -155,7 +180,17 @@ async function run() {
                     departureTime: hmsToMoment(d.departureTime, d.date).unix()
                 }
             });
+
+
+            console.timeEnd("Calls");
             res.send({count: departures.length, departures, stopArea});
+
+            // let q3 = `explain SELECT departure_time as 'departureTime', trip_headsign as 'destination', platform_code as 'platform', trip_long_name as 'formula', agency_name as 'operator', realtime_trip_id as 'trip', date from stop_times join trips using (trip_id) join calendar using (service_id) join routes using (route_id) join stops using (stop_id) join agency using (agency_id) WHERE ((parent_station IN (${parentStations.map(s => "'" + s + "'").join(", ")}) AND date = '${moment().format("YYYYMMDD")}')) ORDER BY departure_time;`;
+            // let explain = await query(q3, gtfsdb);
+            // explain.forEach(e => {
+            //     console.log(e.explain_key);
+            //     console.log(e.explain_value);
+            // })
             // console.log(departuresQuery.length + ' departures');
             // departuresQuery.forEach(d => {
             //     // console.log(d);
